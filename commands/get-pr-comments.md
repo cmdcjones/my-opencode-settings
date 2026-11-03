@@ -1,0 +1,13 @@
+---
+description: Fetch and summarize review comments from the active pull request, grouped by tag and actionability. Usage: /get-pr-comments [PR]
+agent: main
+subtask: true
+---
+
+# Get PR Comments Command
+
+Fetch and summarize the active PR's review comments: $ARGUMENTS
+
+## Your Task
+
+Load the `get-pr-comments` skill with the skill tool and follow it. Group the feedback by tag and actionability.

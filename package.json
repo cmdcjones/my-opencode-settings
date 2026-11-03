@@ -1,0 +1,32 @@
+{
+  "name": "settings-opencode",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node scripts/variants/parity-check.mjs && node --experimental-strip-types --test plugins/code-memory-lib/mode.test.mts plugins/code-memory-lib/claim-intent.test.mts plugins/notification-gate.test.mts plugins/autonomy.test.mts installer-bootstrap.test.mts scripts/agent-harness/test/cloud-session-bootstrap.test.mjs scripts/cursor-plugin/sanitize.test.mjs scripts/cursor-plugin/version-guard.test.mjs scripts/cursor-plugin/review-tags.test.mjs scripts/cursor-plugin/cache-invalidation-hook.test.mjs scripts/agent-harness/test/verify-override.test.mjs scripts/agent-harness/test/install-cli.test.mjs scripts/agent-harness/test/e2e-resolve.test.mjs scripts/agent-harness/test/e2e-sources.test.mjs scripts/agent-harness/test/refactor-flow.test.mjs scripts/agent-harness/test/show-me-screenshot.test.mjs scripts/variants/apply.test.mjs scripts/variants/dangling-agents.test.mjs scripts/variants/prune.test.mjs scripts/variants/vendor.test.mjs scripts/variants/project-local.test.mjs scripts/cursor-plugin/variant.test.mjs scripts/agent-harness/test/kpi.test.mjs scripts/agent-harness/test/kpi-feature.test.mjs scripts/agent-harness/test/pr-visual-report.test.mjs plugins/domain-rules.test.mts plugins/kpi.test.mts",
+    "typecheck:strict": "tsc --noEmit --project tsconfig.strict.json",
+    "metrics": "bun scripts/llm-metrics-dashboard.ts",
+    "test:metrics": "bun test plugins/llm-metrics-lib"
+  },
+  "engines": {
+    "node": ">=22.6"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^3.0.48",
+    "@ai-sdk/openai-compatible": "^2.0.30",
+    "@opencode-ai/plugin": "1.4.6",
+    "opencode-cursor-auth": "^1.0.16"
+  },
+  "overrides": {
+    "uuid": "13.0.1",
+    "better-sqlite3": "13.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "bun-types": "^1.3.11",
+    "jsonc-parser": "3.3.1",
+    "typescript": "5.9.3",
+    "zod": "4.3.5"
+  }
+}

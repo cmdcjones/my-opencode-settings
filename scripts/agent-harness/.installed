@@ -1,0 +1,3 @@
+GH=/opt/homebrew/bin/gh
+ORCA=
+JQ=/usr/bin/jq

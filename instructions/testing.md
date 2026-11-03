@@ -1,0 +1,9 @@
+# Testing
+
+When behavior changes, add a test that fails before the fix. A behavior-preserving restructure starts with characterization tests that pass immediately on the unchanged code. The restructure does not edit those tests.
+
+Load `test-behavior-not-implementation` for how a test should be written. `/tdd refactor` is the characterization path. New behavior uses the `tdd` skill.
+
+Arrange, then act, then assert. The test name states the behavior.
+
+why-not-tooled: test names are not one lint rule across languages.

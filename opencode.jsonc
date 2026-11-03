@@ -1,0 +1,547 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": true,
+  "default_agent": "main",
+  "instructions": [
+    "~/.config/opencode/instructions/monolith.md"
+  ],
+  "agent": {
+    "main": {
+      "description": "Primary agent. Reads, writes, and plans. Loads skills on demand and spawns a subagent only for isolated review, parallel investigation, or noisy output.",
+      "mode": "primary",
+      "model": "{env:OPENCODE_MODEL_CONDUCTOR}",
+      "prompt": "{file:prompts/agents/main.txt}",
+      "temperature": 0.3,
+      "topP": 0.9,
+      "tools": {
+        "read": true,
+        "write": true,
+        "edit": true,
+        "bash": true,
+        "grep": true,
+        "glob": true,
+        "skill": true,
+        "code-memory_*": true
+      },
+      "permission": {
+        "*": "allow",
+        "edit": "allow",
+        "write": "allow",
+        "bash": "allow",
+        "task": {
+          "*": "deny",
+          "code-reviewer": "allow",
+          "security-reviewer": "allow",
+          "database-reviewer": "allow",
+          "ecosystem-auditor": "allow",
+          "e2e-runner": "allow",
+          "why-investigator": "allow",
+          "build-error-resolver": "allow",
+          "cop": "allow",
+          "comment-judge": "allow"
+        }
+      }
+    },
+    "code-reviewer": {
+      "description": "Reviews a diff for bugs, regressions, missing tests, and broken conventions. Use after a meaningful change or when the user asks for a review. Read-only.",
+      "mode": "subagent",
+      "model": "{env:OPENCODE_MODEL_SUBAGENT_WORKER}",
+      "prompt": "{file:prompts/agents/code-reviewer.txt}",
+      "temperature": 0.3,
+      "topP": 0.9,
+      "tools": {
+        "read": true,
+        "bash": true,
+        "grep": true,
+        "glob": true,
+        "skill": true,
+        "task": false,
+        "write": false,
+        "edit": false,
+        "code-memory_*": true
+      }
+    },
+    "ecosystem-auditor": {
+      "description": "Audits OpenCode and Claude Code harness parity. Use for /ecosystem-audit or a harness-coherence check. Read-only.",
+      "mode": "subagent",
+      "model": "{env:OPENCODE_MODEL_SUBAGENT_WORKER}",
+      "prompt": "{file:prompts/agents/ecosystem-auditor.txt}",
+      "temperature": 0.3,
+      "topP": 0.9,
+      "tools": {
+        "*": false,
+        "read": true,
+        "grep": true,
+        "glob": true,
+        "skill": true
+      },
+      "permission": {
+        "*": "deny",
+        "read": "allow",
+        "grep": "allow",
+        "glob": "allow",
+        "skill": "allow",
+        "write": "deny",
+        "edit": "deny",
+        "bash": "deny",
+        "task": "deny",
+        "code-memory_*": "deny",
+        "external_directory": "deny"
+      }
+    },
+    "security-reviewer": {
+      "description": "Reviews auth, secrets, user input, payments, and personal data. Use when a change touches those surfaces or the user asks for a security review. Read-only.",
+      "mode": "subagent",
+      "model": "{env:OPENCODE_MODEL_SUBAGENT_WORKER}",
+      "prompt": "{file:prompts/agents/security-reviewer.txt}",
+      "temperature": 0.3,
+      "topP": 0.9,
+      "tools": {
+        "read": true,
+        "bash": true,
+        "grep": true,
+        "glob": true,
+        "write": false,
+        "edit": false,
+        "code-memory_*": true
+      }
+    },
+    "build-error-resolver": {
+      "description": "Fixes build, typecheck, and lint errors with a minimal diff. Use when the build is red and the log is large.",
+      "mode": "subagent",
+      "model": "{env:OPENCODE_MODEL_SUBAGENT_WORKER}",
+      "prompt": "{file:prompts/agents/build-error-resolver.txt}",
+      "temperature": 0.3,
+      "topP": 0.9,
+      "tools": {
+        "read": true,
+        "write": true,
+        "edit": true,
+        "bash": true,
+        "grep": true,
+        "glob": true,
+        "code-memory_*": true
+      }
+    },
+    "e2e-runner": {
+      "description": "Runs browser end-to-end flows and writes their artifacts. Use for Playwright or a critical user flow. The log stays out of the main session.",
+      "mode": "subagent",
+      "model": "{env:OPENCODE_MODEL_SUBAGENT_WORKER}",
+      "prompt": "{file:prompts/agents/e2e-runner.txt}",
+      "temperature": 0.3,
+      "topP": 0.9,
+      "tools": {
+        "read": true,
+        "write": true,
+        "edit": true,
+        "bash": true,
+        "grep": true,
+        "glob": true,
+        "code-memory_*": true
+      }
+    },
+    "database-reviewer": {
+      "description": "Reviews SQL, PostgreSQL, Supabase, RLS, and migrations. Use for a schema or query change. Read-only.",
+      "mode": "subagent",
+      "model": "{env:OPENCODE_MODEL_SUBAGENT_WORKER}",
+      "prompt": "{file:prompts/agents/database-reviewer.txt}",
+      "temperature": 0.3,
+      "topP": 0.9,
+      "tools": {
+        "read": true,
+        "write": false,
+        "edit": false,
+        "bash": true,
+        "grep": true,
+        "glob": true,
+        "code-memory_*": true
+      }
+    },
+    "why-investigator": {
+      "description": "Investigates one evidence category, git history or one MCP, for design rationale. Use from the why skill, one category per investigator, in parallel. Read-only.",
+      "mode": "subagent",
+      "model": "{env:OPENCODE_MODEL_SUBAGENT_MINI}",
+      "prompt": "{file:prompts/agents/why-investigator.txt}",
+      "temperature": 0.3,
+      "topP": 0.9,
+      "tools": {
+        "read": true,
+        "grep": true,
+        "glob": true,
+        "bash": true,
+        "write": false,
+        "edit": false,
+        "task": false,
+        "code-memory_*": true
+      }
+    },
+    "cop": {
+      "description": "Pre-merge review of HEAD against a target branch. Use when the user runs /cop-review. If angular-cop or dotnet-cop is installed, load that skill. Read-only.",
+      "mode": "subagent",
+      "model": "{env:OPENCODE_MODEL_SUBAGENT_PLANNER}",
+      "prompt": "{file:prompts/agents/cop.txt}",
+      "temperature": 0.3,
+      "topP": 0.9,
+      "tools": {
+        "read": true,
+        "bash": true,
+        "grep": true,
+        "glob": true,
+        "skill": true,
+        "write": false,
+        "edit": false,
+        "code-memory_*": true
+      }
+    },
+    "comment-judge": {
+      "description": "Judges code comments in a clean context. Use for a diff review or a directory purge. persona=rubric uses the comment-judge skill. Read-only.",
+      "mode": "subagent",
+      "model": "{env:OPENCODE_MODEL_SUBAGENT_PLANNER}",
+      "prompt": "{file:prompts/agents/comment-judge.txt}",
+      "temperature": 0.3,
+      "topP": 0.9,
+      "tools": {
+        "read": true,
+        "bash": true,
+        "grep": true,
+        "glob": true,
+        "skill": true,
+        "write": false,
+        "edit": false,
+        "code-memory_*": true
+      }
+    }
+  },
+  "command": {
+    "ship": {
+      "description": "Run one goal from clarify to merge in autonomous mode",
+      "template": "{file:commands/ship.md}\n\n$ARGUMENTS",
+      "agent": "main"
+    },
+    "autonomous": {
+      "description": "Toggle autonomous mode on, off, or show status",
+      "template": "{file:commands/autonomous.md}\n\n$ARGUMENTS",
+      "agent": "main"
+    },
+    "git": {
+      "description": "Handle git operations with enforced branch and commit conventions",
+      "template": "{file:commands/git.md}\n\n$ARGUMENTS",
+      "agent": "main",
+      "subtask": true
+    },
+    "pr": {
+      "description": "Open a pull request with the repo template, after reading REVIEW.md for the tag mapping",
+      "template": "{file:commands/pr.md}\n\n$ARGUMENTS",
+      "agent": "main",
+      "subtask": true
+    },
+    "push-changes": {
+      "description": "Commit relevant changes and push through the git workflow",
+      "template": "{file:commands/git.md}\n\nExecute this git task:\nCommit the relevant changes with a compliant conventional commit message and push the current branch to its remote. Before pushing, inspect every local commit that would be published: compare against the tracked upstream when one exists, otherwise compare against the branch point from the repository default branch and stop if unrelated committed work would also be published. If no upstream exists and the published commit set is correct, push with upstream tracking. If there is nothing to commit, do not create an empty commit. If hooks fail or the push is ambiguous, stop and report the blocker.\n\nAdditional context: $ARGUMENTS",
+      "agent": "main",
+      "subtask": true
+    },
+    "plan": {
+      "description": "Create a detailed implementation plan for complex features",
+      "template": "{file:commands/plan.md}\n\n$ARGUMENTS",
+      "agent": "main",
+      "subtask": true
+    },
+    "tdd": {
+      "description": "When behavior changes, add a test that fails before the fix. /tdd refactor pins current behavior first.",
+      "template": "{file:commands/tdd.md}\n\n$ARGUMENTS",
+      "agent": "main",
+      "subtask": true
+    },
+    "cop-review": {
+      "description": "Direct pre-merge review by code-reviewer. It selects applicable Angular/.NET review skills without agent delegation. Usage: /cop-review <target> [--level=junior|senior] [--scope=...] [--no-tools]",
+      "template": "{file:commands/cop-review.md}\n\n$ARGUMENTS",
+      "agent": "code-reviewer",
+      "subtask": true
+    },
+    "security": {
+      "description": "Run comprehensive security review",
+      "template": "{file:commands/security.md}\n\n$ARGUMENTS",
+      "agent": "security-reviewer",
+      "subtask": true
+    },
+    "build-fix": {
+      "description": "Fix build and TypeScript errors with minimal changes",
+      "template": "{file:commands/build-fix.md}\n\n$ARGUMENTS",
+      "agent": "build-error-resolver",
+      "subtask": true
+    },
+    "e2e": {
+      "description": "Generate and run end-to-end tests from the project e2e override or a discovered runner",
+      "template": "{file:commands/e2e.md}\n\n$ARGUMENTS",
+      "agent": "e2e-runner",
+      "subtask": true
+    },
+    "refactor-clean": {
+      "description": "Remove dead code and consolidate duplicates",
+      "template": "{file:commands/refactor-clean.md}\n\n$ARGUMENTS",
+      "agent": "main",
+      "subtask": true
+    },
+    "orchestrate": {
+      "description": "Orchestrate multiple agents for complex tasks",
+      "template": "{file:commands/orchestrate.md}\n\n$ARGUMENTS",
+      "agent": "main",
+      "subtask": true
+    },
+    "verify": {
+      "description": "Run verification loop",
+      "template": "{file:commands/verify.md}\n\n$ARGUMENTS",
+      "agent": "main"
+    },
+    "eval": {
+      "description": "Run evaluation against criteria",
+      "template": "{file:commands/eval.md}\n\n$ARGUMENTS",
+      "agent": "main"
+    },
+    "update-docs": {
+      "description": "Update documentation",
+      "template": "{file:commands/update-docs.md}\n\n$ARGUMENTS",
+      "agent": "main",
+      "subtask": true
+    },
+    "update-codemaps": {
+      "description": "Update codemaps",
+      "template": "{file:commands/update-codemaps.md}\n\n$ARGUMENTS",
+      "agent": "main",
+      "subtask": true
+    },
+    "test-coverage": {
+      "description": "Analyze test coverage",
+      "template": "{file:commands/test-coverage.md}\n\n$ARGUMENTS",
+      "agent": "main",
+      "subtask": true
+    },
+    "skill-create": {
+      "description": "Generate skills from git history",
+      "template": "{file:commands/skill-create.md}\n\n$ARGUMENTS"
+    },
+    "show-me": {
+      "description": "Explain a topic visually by producing a self-contained HTML artifact (diagram, infographic, short slide deck, or statechart), opening it, and showing PNG screenshots of it. Usage: /show-me <topic>",
+      "template": "{file:commands/show-me.md}\n\n$ARGUMENTS",
+      "agent": "main",
+      "subtask": true
+    },
+    "show-your-work": {
+      "description": "Keep a reviewable TSV decision trail for long-running or unattended work. Usage: /show-your-work [task-slug]",
+      "template": "{file:commands/show-your-work.md}\n\n$ARGUMENTS",
+      "agent": "main"
+    },
+    "comment-judge": {
+      "description": "Judge code comments against the forbidden/false/stale/narration/noise/keep rubric and emit structured findings. Usage: /comment-judge <path>",
+      "template": "{file:commands/comment-judge.md}\n\n$ARGUMENTS",
+      "agent": "comment-judge",
+      "subtask": true
+    },
+    "why": {
+      "description": "Investigate why code is shaped the way it is — design rationale, regressions, postmortems, data-backed thresholds — by querying historical-evidence MCPs in parallel and returning a cited read on decisions and tradeoffs. Usage: /why <question>",
+      "template": "{file:commands/why.md}\n\n$ARGUMENTS",
+      "agent": "main"
+    },
+    "blast-radius": {
+      "description": "Find what a change could break beyond the diff before it ships, and prove the one fact it's safe because of by running real code instead of writing it up. Usage: /blast-radius <change|diff>",
+      "template": "{file:commands/blast-radius.md}\n\n$ARGUMENTS",
+      "agent": "main"
+    },
+    "fix-ci": {
+      "description": "Find failing PR checks, inspect logs or check links, and apply focused fixes. Routing depends on failure type (build/test/security). Usage: /fix-ci [branch|PR]",
+      "template": "{file:commands/fix-ci.md}\n\n$ARGUMENTS",
+      "agent": "main"
+    },
+    "loop-on-ci": {
+      "description": "Monitor PR checks until green — watch required checks, fix failures via fix-ci, iterate until all pass. Capped at 5 iterations. Usage: /loop-on-ci [branch|PR]",
+      "template": "{file:commands/loop-on-ci.md}\n\n$ARGUMENTS",
+      "agent": "main"
+    },
+    "get-pr-comments": {
+      "description": "Fetch and summarize review comments from the active pull request, grouped by tag and actionability. Usage: /get-pr-comments [PR]",
+      "template": "{file:commands/get-pr-comments.md}\n\n$ARGUMENTS",
+      "agent": "main",
+      "subtask": true
+    },
+    "fix-merge-conflicts": {
+      "description": "Resolve merge conflicts via rebase, validate build and tests, and finalize with a backup branch — linear history, never force-push without explicit consent. Usage: /fix-merge-conflicts",
+      "template": "{file:commands/fix-merge-conflicts.md}\n\n$ARGUMENTS",
+      "agent": "main",
+      "subtask": true
+    }
+  },
+  "mcp": {
+    "context7": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "enabled": false
+    },
+    "wallaby": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "-c",
+        "node ~/.wallaby/mcp/"
+      ],
+      "enabled": false
+    },
+    "Figma": {
+      "type": "remote",
+      "url": "https://mcp.figma.com/mcp",
+      "headers": {},
+      "enabled": false
+    },
+    "code-memory": {
+      "type": "local",
+      "command": [
+        "uvx",
+        "--from",
+        "flurryx-code-memory@latest",
+        "code-memory-mcp"
+      ],
+      "enabled": true,
+      "environment": {
+        "CODE_MEMORY_PROJECT": "auto",
+        "CLAIMS_EXTRACTION": "true"
+      }
+    }
+  },
+  "plugin": [
+    "opencode-skill-creator",
+    "./plugins/kpi.ts",
+    "./plugins/notification.ts",
+    "./plugins/mistral-affinity.js",
+    "./plugins/llm-metrics.ts",
+    "./plugins/secret-file-guard.ts",
+    "./plugins/tool-budget.ts",
+    "./plugins/autonomy.ts",
+    "./plugins/domain-rules.ts"
+  ],
+  "provider": {
+    "llama.cpp": {
+      "npm": "@ai-sdk/anthropic",
+      "name": "llama.cpp (local)",
+      "options": {
+        "baseURL": "http://127.0.0.1:8080/v1",
+        "apiKey": "local"
+      },
+      "models": {
+        "default_model": {
+          "name": "Standard Llama.cpp Mode"
+        }
+      }
+    },
+    "mlx": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "MLX (local)",
+      "options": {
+        "baseURL": "http://127.0.0.1:8080/v1"
+      },
+      "models": {
+        "default_model": {
+          "name": "Default MLX Model"
+        }
+      }
+    },
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (local)",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      },
+      "models": {
+        "qwen2.5-coder:7b-instruct": {
+          "name": "Qwen2.5 Coder 7B Instruct"
+        }
+      }
+    },
+    "openai": {
+      "models": {
+        "gpt-5.6-sol": {
+          "name": "GPT-5.6 Sol",
+          "tool_call": true,
+          "reasoning": true
+        },
+        "gpt-5.6-terra": {
+          "name": "GPT-5.6 Terra",
+          "tool_call": true,
+          "reasoning": true
+        },
+        "gpt-5.6-luna": {
+          "name": "GPT-5.6 Luna",
+          "tool_call": true,
+          "reasoning": true
+        }
+      }
+    },
+    "myMistral": {
+      "name": "myMistral",
+      "npm": "@ai-sdk/mistral",
+      "options": {
+        "apiKey": "{env:MISTRAL_API_KEY}"
+      },
+      "models": {
+        "mistral-large-latest": {
+          "name": "Mistral Large (latest)",
+          "tool_call": true,
+          "reasoning": false
+        },
+        "mistral-medium-latest": {
+          "name": "Mistral Medium (latest)",
+          "tool_call": true,
+          "reasoning": false
+        },
+        "mistral-medium-2604": {
+          "name": "Mistral Medium 2604",
+          "tool_call": true,
+          "reasoning": true,
+          "options": {
+            "reasoning_effort": "high"
+          }
+        },
+        "mistral-small-latest": {
+          "name": "Mistral Small (latest)",
+          "tool_call": true,
+          "reasoning": true,
+          "options": {
+            "reasoning_effort": "high"
+          }
+        },
+        "codestral-latest": {
+          "name": "Codestral (latest)",
+          "tool_call": true,
+          "reasoning": false
+        },
+        "magistral-medium-latest": {
+          "name": "Magistral Medium (latest)",
+          "tool_call": true,
+          "reasoning": true,
+          "options": {
+            "reasoning_effort": "high"
+          }
+        },
+        "ministral-8b-latest": {
+          "name": "Ministral 8B (latest)",
+          "tool_call": true,
+          "reasoning": false
+        },
+        "ministral-3b-latest": {
+          "name": "Ministral 3B (latest)",
+          "tool_call": true,
+          "reasoning": false
+        },
+        "pixtral-large-latest": {
+          "name": "Pixtral Large (latest)",
+          "tool_call": true,
+          "reasoning": false
+        }
+      }
+    }
+  }
+}

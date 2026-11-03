@@ -1,0 +1,22 @@
+// Per-project MCP for Monolith. The installer does not enable these.
+{
+  "mcp": {
+    "blender": {
+      "type": "local",
+      "command": [
+        "uv",
+        "--directory",
+        "$HOME/dev/blender_mcp/mcp",
+        "run",
+        "blender-mcp"
+      ],
+      "enabled": false
+    },
+    "smartbear-swagger": {
+      "type": "remote",
+      "url": "https://swagger.mcp.smartbear.com/mcp",
+      "headers": {},
+      "enabled": false
+    }
+  }
+}

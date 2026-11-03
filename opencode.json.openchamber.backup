@@ -1,0 +1,11 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+    
+  "provider": {
+    "cursor": { "name": "Cursor" }
+  },
+  "plugins": [
+    "~/opencode-curso"
+  ]
+  
+}
